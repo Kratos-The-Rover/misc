@@ -20,6 +20,40 @@ float vel3;
 //x,y is the stoke length that has to be reached. we get it from the final_ext topic. k is the right joystick input for the base rotation
 float x,y,k;
 
+const int dirPin = 2;
+const int stepPin = 3;
+const int stepsPerRevolution = 200;
+
+void turnLeft()
+{
+  // Set motor direction clockwise
+  digitalWrite(dirPin, HIGH);
+
+  // Spin motor slowly
+  for(int x = 0; x < stepsPerRevolution; x++)
+  {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(2000);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(2000);
+  }
+  delay(1000); // Wait a second 
+}
+void turnRight()
+{
+    digitalWrite(dirPin, LOW);
+
+  // Spin motor quickly
+  for(int x = 0; x < stepsPerRevolution; x++)
+  {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(3000);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(3000);
+  }
+  delay(1000); // Wait a second  
+  
+}
 void update_act(){
   //for linear actuator 1(6 inch)
   if(l1 > x+0.1){
@@ -67,6 +101,10 @@ void act_callback(const geometry_msgs::Point& msg){
 void rot_callback(const sensor_msgs::Joy& msg)
 {
   k = msg.axes[3];
+  if(msg.buttons[2]==1)   //when you press x
+  turnLeft();
+  if(msg.buttons[1]==1)   //when you press b
+  turnRight();
 }
 
 ros::NodeHandle n;
@@ -81,6 +119,8 @@ float mymap(float a, float b, float c, float d, float e){
 }
 
 void setup(){
+  pinMode(stepPin, OUTPUT);
+  pinMode(dirPin, OUTPUT);
   for(int i=0; i<6; i++){
     pinMode(pin[i],OUTPUT);
   }
