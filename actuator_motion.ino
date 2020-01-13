@@ -23,7 +23,39 @@ float x,y,k;
 const int dirPin = 2;
 const int stepPin = 3;
 const int stepsPerRevolution = 200;
-
+const int left_bev_pwm_pin = 
+const int right_bev_pwm_pin = 
+const int left_bev_dir_pin = 
+const int right_bev_dir_pin =
+int bevel_pwm =  
+void gripperForward()
+{
+    digitalWrite(left_bev_dir_pin,HIGH); // verify
+    analogWrite(left_bev_pw,_pin,bevel_pwm);
+    digitalWrite(right_bev_dir_pin,LOW); // verify
+    analogWrite(right_bev_pwm_pin,bevel_pwm);
+}
+void gripperBackward()
+{
+    digitalWrite(left_bev_dir_pin,LOW); // verify
+    analogWrite(left_bev_pw,_pin,bevel_pwm);
+    digitalWrite(right_bev_dir_pin,HIGH); // verify
+    analogWrite(right_bev_pwm_pin,bevel_pwm);
+}
+void gripperRotateCw() // gripper rotate clockwise
+{
+  digitalWrite(left_bev_dir_pin,LOW); // verify
+  analogWrite(left_bev_pw,_pin,bevel_pwm);
+  digitalWrite(right_bev_dir_pin,LOW); // verify
+  analogWrite(right_bev_pwm_pin,bevel_pwm);
+}
+void gripperRotateCcw() // gripper rotate counter clockwise
+{
+  digitalWrite(left_bev_dir_pin,HIGH); // verify
+  analogWrite(left_bev_pw,_pin,bevel_pwm);
+  digitalWrite(right_bev_dir_pin,HIGH); // verify
+  analogWrite(right_bev_pwm_pin,bevel_pwm);
+}
 void turnLeft()
 {
   // Set motor direction clockwise
@@ -105,6 +137,10 @@ void rot_callback(const sensor_msgs::Joy& msg)
   turnLeft();
   if(msg.buttons[1]==1)   //when you press b
   turnRight();
+  if(msg.buttons[5]==1)   // when you press RB
+  gripperRotateCw();
+  if(msg.buttons[4]==1)   // when you press LB 
+  gripperRotateCcw();
 }
 
 ros::NodeHandle n;
