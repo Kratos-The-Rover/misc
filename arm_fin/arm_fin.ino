@@ -6,6 +6,7 @@
 #include <ros.h>
 #include <sensor_msgs/Joy.h>
 #include <geometry_msgs/Point.h>
+#include <std_msgs/String.h>
 
 #define POT1 A3
 #define POT2 A4
@@ -22,44 +23,85 @@ float x,y,k;
 
 const int dirPin = 2;
 const int stepPin = 3;
-const int stepsPerRevolution = 200;
-const int left_bev_pwm_pin = 2;
-const int right_bev_pwm_pin = 3;
+const int stepsPerRevolution = 100;
+const int left_bev_pwm_pin = 8;
+const int right_bev_pwm_pin = 9;
 const int left_bev_dir_pin = 24;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
 const int right_bev_dir_pin = 26;
 
-const int left_bevel_pwm = 50;
-const int right_bevel_pwm = 50;
+const int left_bevel_pwm = 80;
+const int right_bevel_pwm = 80;
 
-void gripperForward()
+std_msgs::String mah_str;
+ros::Publisher pub2("func", &mah_str);
+
+void baseRotCw(){
+  // home
+  pub2.publish(&mah_str);
+}
+
+void baseRotACw(){
+  // start
+  pub2.publish(&mah_str);
+}
+
+void pitchUp()
 {
-    digitalWrite(left_bev_dir_pin,HIGH); // verify
+    digitalWrite(left_bev_dir_pin,LOW); // verify
     analogWrite(left_bev_pwm_pin,left_bevel_pwm);
     digitalWrite(right_bev_dir_pin,LOW); // verify
     analogWrite(right_bev_pwm_pin,right_bevel_pwm);
+    delay(500);
+    analogWrite(left_bev_pwm_pin,0);
+    analogWrite(right_bev_pwm_pin,0);
+
+    mah_str.data = "pitch up";
+    pub2.publish(&mah_str);
 }
-void gripperBackward()
+
+void pitchDown()
 {
     digitalWrite(left_bev_dir_pin,LOW); // verify
     analogWrite(left_bev_pwm_pin,left_bevel_pwm);
     digitalWrite(right_bev_dir_pin,HIGH); // verify
     analogWrite(right_bev_pwm_pin,right_bevel_pwm);
+    delay(500);
+    analogWrite(left_bev_pwm_pin,0);
+    analogWrite(right_bev_pwm_pin,0);
+
+    mah_str.data = "pitch down";
+    pub2.publish(&mah_str);
 }
+
 void gripperRotateCw() // gripper rotate clockwise
 {
   digitalWrite(left_bev_dir_pin,LOW); // verify
   analogWrite(left_bev_pwm_pin,left_bevel_pwm);
   digitalWrite(right_bev_dir_pin,LOW); // verify
   analogWrite(right_bev_pwm_pin,right_bevel_pwm);
+  delay(500);
+  analogWrite(left_bev_pwm_pin,0);
+  analogWrite(right_bev_pwm_pin,0);
+  
+  mah_str.data = "rotate cw";
+  pub2.publish(&mah_str);
 }
+
 void gripperRotateCcw() // gripper rotate counter clockwise
 {
   digitalWrite(left_bev_dir_pin,HIGH); // verify
   analogWrite(left_bev_pwm_pin,left_bevel_pwm);
   digitalWrite(right_bev_dir_pin,HIGH); // verify
   analogWrite(right_bev_pwm_pin,right_bevel_pwm);
+  delay(500);
+  analogWrite(left_bev_pwm_pin,0);
+  analogWrite(right_bev_pwm_pin,0);
+
+  mah_str.data = "rotate acw";
+  pub2.publish(&mah_str);
 }
-void turnLeft()
+
+void close()
 {
   // Set motor direction clockwise
   digitalWrite(dirPin, HIGH);
@@ -68,13 +110,14 @@ void turnLeft()
   for(int x = 0; x < stepsPerRevolution; x++)
   {
     digitalWrite(stepPin, HIGH);
-    delayMicroseconds(2000);
+    delayMicroseconds(3000);
     digitalWrite(stepPin, LOW);
-    delayMicroseconds(2000);
+    delayMicroseconds(3000);
   }
-  delay(1000); // Wait a second 
+  delay(100); // Wait a second 
 }
-void turnRight()
+
+void open()
 {
     digitalWrite(dirPin, LOW);
 
@@ -86,9 +129,10 @@ void turnRight()
     digitalWrite(stepPin, LOW);
     delayMicroseconds(3000);
   }
-  delay(1000); // Wait a second  
+  delay(100); // Wait a second  
   
 }
+
 void update_act(){
   //for linear actuator 1(6 inch)
   if(l1 > x+0.1){
@@ -136,18 +180,28 @@ void act_callback(const geometry_msgs::Point& msg){
 void rot_callback(const sensor_msgs::Joy& msg)
 {
   k = msg.axes[3];
+  
   if(msg.buttons[2]==1)   //when you press x
-  turnLeft();
+    close();
   if(msg.buttons[1]==1)   //when you press b
-  turnRight();
+    open();
   if(msg.buttons[5]==1)   // when you press RB
-  gripperRotateCw();
+    gripperRotateCw();
   if(msg.buttons[4]==1)   // when you press LB 
-  gripperRotateCcw();
+    gripperRotateCcw();
+  if(msg.buttons[6]==1)   // start
+    baseRotCw();
+  if(msg.buttons[7]==1)   // back
+    baseRotACw();
+  if(msg.buttons[0]==1)   // y
+    pitchUp();
+  if(msg.buttons[3]==1)   // a
+    pitchDown();
 }
 
 ros::NodeHandle n;
 geometry_msgs::Point c_ext;
+
 ros::Subscriber<geometry_msgs::Point>sub1("final_ext", act_callback);
 ros::Subscriber<sensor_msgs::Joy> sub2("joy", rot_callback);
 ros::Publisher pub1("current_ext", &c_ext);
@@ -164,7 +218,9 @@ void setup(){
     pinMode(pin[i],OUTPUT);
   }
   n.initNode();
-  n.advertise(pub1);  
+  n.advertise(pub1); 
+  n.advertise(pub2); 
+   
   n.subscribe(sub1);
   n.subscribe(sub2);  
 }
