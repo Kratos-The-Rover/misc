@@ -17,7 +17,10 @@ class Vels(object):
     def __init__(self):
         rospy.on_shutdown(self.quit)
 
-        self.ser = serial.Serial('/dev/ttyUSB0', 57600) # Establish the connection on a specific port
+        try:
+            self.ser = serial.Serial('/dev/ttyACM0', 57600) # Establish the connection on a specific port
+        except:
+            self.ser = serial.Serial('/dev/ttyUSB0', 57600)
         #self.wait_for_arduino()
         try:
             #   while self.ser.readline() is not "READY": 	
