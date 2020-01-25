@@ -178,9 +178,7 @@ void act_callback(const geometry_msgs::Point& msg){
 }
 
 void rot_callback(const sensor_msgs::Joy& msg)
-{
-  k = msg.axes[3];
-  
+{ 
   if(msg.buttons[2]==1)   //when you press x
     close();
   if(msg.buttons[1]==1)   //when you press b
